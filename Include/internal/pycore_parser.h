@@ -30,14 +30,13 @@ struct _parser_runtime_state {
     struct _expr dummy_name;
 };
 
-_Py_DECLARE_STR(empty, "")
 #if defined(Py_DEBUG) && defined(Py_GIL_DISABLED)
 #define _parser_runtime_state_INIT \
     { \
         .mutex = {0}, \
         .dummy_name = { \
             .kind = Name_kind, \
-            .v.Name.id = &_Py_STR(empty), \
+            .v.Name.id = _Py_EMPTY_STRING, \
             .v.Name.ctx = Load, \
             .lineno = 1, \
             .col_offset = 0, \
@@ -50,7 +49,7 @@ _Py_DECLARE_STR(empty, "")
     { \
         .dummy_name = { \
             .kind = Name_kind, \
-            .v.Name.id = &_Py_STR(empty), \
+            .v.Name.id = _Py_EMPTY_STRING, \
             .v.Name.ctx = Load, \
             .lineno = 1, \
             .col_offset = 0, \

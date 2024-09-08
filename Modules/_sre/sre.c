@@ -2914,11 +2914,11 @@ expand_template(TemplateObject *self, MatchObject *match)
     }
 
     if (PyUnicode_Check(self->literal)) {
-        result = _PyUnicode_JoinArray(&_Py_STR(empty), out, count);
+        result = _PyUnicode_JoinArray(_Py_EMPTY_STRING, out, count);
     }
     else {
         Py_SET_SIZE(list, count);
-        result = PyBytes_Join((PyObject *)&_Py_SINGLETON(bytes_empty), list);
+        result = PyBytes_Join(_Py_EMPTY_BYTES, list);
     }
 
 cleanup:

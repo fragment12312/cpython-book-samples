@@ -1868,7 +1868,9 @@ class datetime(date):
         warnings.warn("datetime.datetime.utcfromtimestamp() is deprecated and scheduled "
                       "for removal in a future version. Use timezone-aware "
                       "objects to represent datetimes in UTC: "
-                      "datetime.datetime.fromtimestamp(t, datetime.UTC).",
+                      "datetime.datetime.fromtimestamp(t, datetime.UTC). To maintain "
+                      "compatibility datetime.datetime.fromtimestamp(timestamp) "
+                      "may be used.",
                       DeprecationWarning,
                       stacklevel=2)
         return cls._fromtimestamp(t, True, None)
@@ -1886,7 +1888,10 @@ class datetime(date):
         warnings.warn("datetime.datetime.utcnow() is deprecated and scheduled for "
                       "removal in a future version. Use timezone-aware "
                       "objects to represent datetimes in UTC: "
-                      "datetime.datetime.now(datetime.UTC).",
+                      "datetime.datetime.now(datetime.UTC). To maintain "
+                      "compatibility "
+                      "datetime.datetime.now(datetime.UTC).replace(tzinfo=None) "
+                      "may be used.",
                       DeprecationWarning,
                       stacklevel=2)
         t = _time.time()

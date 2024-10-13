@@ -4,7 +4,7 @@
 # into the real Makefile by running the script ./configure, which
 # replaces things like @spam@ with values appropriate for your system.
 # This means that if you edit Makefile, your changes get lost the next
-# time you run the configure script.  Ideally, you can do:
+# time you run the configure script.  Ideally, you can do: 
 #
 #	./configure
 #	make
@@ -230,7 +230,7 @@ LIBHACL_SIMD256_OBJS=@LIBHACL_SIMD256_OBJS@
 
 # Module state, compiler flags and linker flags
 # Empty CFLAGS and LDFLAGS are omitted.
-# states:
+# states: 
 #   * yes: module is available
 #   * missing: build dependency is missing
 #   * disabled: module is disabled
@@ -346,7 +346,8 @@ MODULE_OBJS=	\
 		Modules/main.o \
 		Modules/gcmodule.o
 
-IO_H=		Modules/_io/_iomodule.h
+IO_H=		Modules/_io/_iomodule.h \
+		Include/internal/pycore_emscripten_trampoline.h
 
 IO_OBJS=	\
 		Modules/_io/_iomodule.o \
@@ -685,13 +686,15 @@ LIBHACL_BLAKE2_HEADERS= \
 		Modules/_hacl/internal/Hacl_Impl_Blake2_Constants.h \
 		Modules/_hacl/internal/Hacl_Hash_Blake2s_Simd128.h \
 		Modules/_hacl/internal/Hacl_Hash_Blake2b_Simd256.h \
+		Modules/_hacl/lib_memzero0.h \
+		Modules/_hacl/libintvector.h \
 		$(LIBHACL_HEADERS)
 
 #########################################################################
 # Rules
 
 # Default target
-all:		@DEF_MAKE_ALL_RULE@
+all: @DEF_MAKE_ALL_RULE@
 
 # First target in Makefile is implicit default. So .PHONY needs to come after
 # all.
@@ -699,7 +702,7 @@ all:		@DEF_MAKE_ALL_RULE@
 
 # Provide quick help for common Makefile targets.
 .PHONY: help
-help:
+help: 
 	@echo "Run 'make' to build the Python executable and extension modules"
 	@echo ""
 	@echo "or 'make <target>' where <target> is one of:"
@@ -718,11 +721,11 @@ help:
 
 # Display a full list of Makefile targets
 .PHONY: list-targets
-list-targets:
+list-targets: 
 	@grep -E '^[A-Za-z][-A-Za-z0-9]+:' Makefile | awk -F : '{print $$1}'
 
 .PHONY: build_all
-build_all:	check-clean-src check-app-store-compliance $(BUILDPYTHON) platform sharedmods \
+build_all: check-clean-src check-app-store-compliance $(BUILDPYTHON) platform sharedmods \
 		gdbhooks Programs/_testembed scripts checksharedmods rundsymutil
 
 .PHONY: build_wasm
@@ -731,7 +734,7 @@ build_wasm: check-clean-src $(BUILDPYTHON) platform sharedmods \
 
 # Check that the source is clean when building out of source.
 .PHONY: check-clean-src
-check-clean-src:
+check-clean-src: 
 	@if test -n "$(VPATH)" -a \( \
 	    -f "$(srcdir)/$(BUILDPYTHON)" \
 	    -o -f "$(srcdir)/Programs/python.o" \
@@ -749,14 +752,14 @@ check-clean-src:
 # This is checked as a dry-run against the original library sources;
 # the patch will be actually applied during the install phase.
 .PHONY: check-app-store-compliance
-check-app-store-compliance:
+check-app-store-compliance: 
 	@if [ "$(APP_STORE_COMPLIANCE_PATCH)" != "" ]; then \
 		patch --dry-run --quiet --force --strip 1 --directory "$(abs_srcdir)" --input "$(abs_srcdir)/$(APP_STORE_COMPLIANCE_PATCH)"; \
 		echo "App store compliance patch can be applied."; \
 	fi
 
 # Profile generation build must start from a clean tree.
-profile-clean-stamp:
+profile-clean-stamp: 
 	$(MAKE) clean
 	touch $@
 
@@ -772,7 +775,7 @@ profile-gen-stamp: profile-clean-stamp
 	touch $@
 
 # Run task with profile generation build to create profile information.
-profile-run-stamp:
+profile-run-stamp: 
 	@echo "Running code to generate profile data (this can take a while):"
 	# First, we need to create a clean build with profile generation
 	# enabled.
@@ -803,7 +806,7 @@ BOLT_INSTRUMENT_FLAGS := @BOLT_INSTRUMENT_FLAGS@
 BOLT_APPLY_FLAGS := @BOLT_APPLY_FLAGS@
 
 .PHONY: clean-bolt
-clean-bolt:
+clean-bolt: 
 	# Profile data.
 	rm -f *.fdata
 	# Pristine binaries before BOLT optimization.
@@ -842,19 +845,19 @@ profile-bolt-stamp: $(BUILDPYTHON)
 	touch $@
 
 .PHONY: bolt-opt
-bolt-opt:
+bolt-opt: 
 	$(MAKE) @PREBOLT_RULE@
 	$(MAKE) profile-bolt-stamp
 
 # Compile and run with gcov
 .PHONY: coverage
-coverage:
+coverage: 
 	@echo "Building with support for coverage checking:"
 	$(MAKE) clean
 	$(MAKE) @DEF_MAKE_RULE@ CFLAGS="$(CFLAGS) -O0 -pg --coverage" LDFLAGS="$(LDFLAGS) --coverage"
 
 .PHONY: coverage-lcov
-coverage-lcov:
+coverage-lcov: 
 	@echo "Creating Coverage HTML report with LCOV:"
 	@rm -f $(COVERAGE_INFO)
 	@rm -rf $(COVERAGE_REPORT)
@@ -904,7 +907,7 @@ clinic-tests: check-clean-src $(srcdir)/Lib/test/clinic.test.c
 	$(PYTHON_FOR_REGEN) $(srcdir)/Tools/clinic/clinic.py -f $(srcdir)/Lib/test/clinic.test.c
 
 # Build the interpreter
-$(BUILDPYTHON):	Programs/python.o $(LINK_PYTHON_DEPS)
+$(BUILDPYTHON): Programs/python.o $(LINK_PYTHON_DEPS)
 	$(LINKCC) $(PY_CORE_LDFLAGS) $(LINKFORSHARED) -o $@ Programs/python.o $(LINK_PYTHON_OBJS) $(LIBS) $(MODLIBS) $(SYSLIBS)
 
 platform: $(PYTHON_FOR_BUILD_DEPS) pybuilddir.txt
@@ -937,7 +940,7 @@ libpython$(LDVERSION).so: $(LIBRARY_OBJS) $(DTRACE_OBJS)
 		$(LN) -f $(INSTSONAME) $@; \
 	fi
 
-libpython3.so:	libpython$(LDVERSION).so
+libpython3.so: libpython$(LDVERSION).so
 	$(BLDSHARED) $(NO_AS_NEEDED) -o $@ -Wl,-h$@ $^
 
 libpython$(LDVERSION).dylib: $(LIBRARY_OBJS)
@@ -1290,11 +1293,14 @@ PYTHON_HEADERS= \
 		$(srcdir)/Include/internal/pycore_uop_metadata.h \
 		$(srcdir)/Include/internal/pycore_warnings.h \
 		$(srcdir)/Include/internal/pycore_weakref.h \
+		$(srcdir)/Include/internal/pycore_emscripten_trampoline.h \
+		$(srcdir)/Python/stdlib_module_names.h \
+		$(srcdir)/Python/condvar.h \
+		$(srcdir)/Modules/_testcapi/parts.h \
 		$(DTRACE_HEADERS) \
 		@PLATFORM_HEADERS@ \
 		\
-		$(srcdir)/Python/stdlib_module_names.h
-
+		
 ##########################################################################
 # Build static libmpdec.a
 LIBMPDEC_CFLAGS=@LIBMPDEC_CFLAGS@ $(PY_STDMODULE_CFLAGS) $(CCSHARED)
@@ -1438,7 +1444,7 @@ rundsymutil: sharedmods $(PYTHON_FOR_BUILD_DEPS) $(BUILDPYTHON)
 		done \
 	fi
 
-Modules/Setup.local:
+Modules/Setup.local: 
 	@# Create empty Setup.local when file was deleted by user
 	echo "# Edit this file for local setup changes" > $@
 
@@ -1472,7 +1478,7 @@ regen-test-frozenmain: $(BUILDPYTHON)
 	$(RUNSHARED) ./$(BUILDPYTHON) $(srcdir)/Programs/freeze_test_frozenmain.py Programs/test_frozenmain.h
 
 .PHONY: regen-test-levenshtein
-regen-test-levenshtein:
+regen-test-levenshtein: 
 	# Regenerate Lib/test/levenshtein_examples.json
 	$(PYTHON_FOR_REGEN) $(srcdir)/Tools/build/generate_levenshtein_examples.py $(srcdir)/Lib/test/levenshtein_examples.json
 
@@ -1511,7 +1517,7 @@ _bootstrap_python: $(LIBRARY_OBJS_OMIT_FROZEN) Programs/_bootstrap_python.o Modu
 # interpreter. The build interpreter must have same version and same bytecode
 # as the host (target) binary.
 #
-# Standard build process:
+# Standard build process: 
 # 1) compile minimal core objects for Py_Compile*() and PyMarshal_Write*().
 # 2) build Programs/_freeze_module binary.
 # 3) create frozen module headers for importlib and getpath.
@@ -1520,7 +1526,7 @@ _bootstrap_python: $(LIBRARY_OBJS_OMIT_FROZEN) Programs/_bootstrap_python.o Modu
 #    ``./_bootstrap_python Programs/_freeze_module.py``. The pure Python
 #    script is used to test the cross compile code path.
 #
-# Cross compile process:
+# Cross compile process: 
 # 1) create all frozen module headers with external build Python and
 #    Programs/_freeze_module.py script.
 #
@@ -1577,9 +1583,9 @@ FROZEN_FILES_OUT = \
 		Python/frozen_modules/frozen_only.h
 # End FROZEN_FILES_OUT
 
-Programs/_freeze_module.o: Programs/_freeze_module.c Makefile
+Programs/_freeze_module.o: Programs/_freeze_module.c Makefile Include/floatobject.h Include/bytesobject.h Include/compile.h Include/pytypedefs.h Include/cpython/monitoring.h Include/cpython/abstract.h Include/cpython/setobject.h Include/intrcheck.h Include/cpython/odictobject.h Include/cpython/object.h Include/longobject.h Include/bltinmodule.h Include/internal/pycore_lock.h Include/cpython/classobject.h Include/typeslots.h Include/cpython/descrobject.h Include/pymem.h Include/pyerrors.h Include/cpython/initconfig.h Include/warnings.h Include/cpython/ceval.h Include/abstract.h Include/cpython/warnings.h Include/cpython/fileutils.h Include/complexobject.h Include/memoryobject.h Include/cpython/longobject.h Include/cpython/pyhash.h Include/import.h Include/pyhash.h Include/cpython/pylifecycle.h Include/cpython/cellobject.h Include/cpython/listobject.h Include/pyatomic.h Include/genericaliasobject.h Include/iterobject.h Include/pylifecycle.h Include/traceback.h Include/cpython/pymem.h Include/cpython/pystate.h Include/enumobject.h Include/pyport.h Include/cpython/memoryobject.h Include/cpython/code.h Include/Python.h Include/dictobject.h Include/objimpl.h Include/cpython/tracemalloc.h Include/cpython/methodobject.h Include/pymacconfig.h Include/cpython/pyctype.h Include/pythread.h Include/pystats.h Include/weakrefobject.h Include/cpython/objimpl.h Include/structseq.h Include/cpython/pyfpe.h Include/cpython/critical_section.h Include/pystrtod.h Include/cpython/bytesobject.h Include/unicodeobject.h Include/modsupport.h Include/tupleobject.h Include/cpython/import.h Include/cpython/genobject.h Include/object.h Include/lock.h Include/pymath.h Include/internal/pycore_hashtable.h Include/rangeobject.h Include/cpython/pythread.h Include/pystrcmp.h Include/codecs.h Include/boolobject.h Include/exports.h Include/osmodule.h Include/pymacro.h Include/pystate.h Include/cpython/pytime.h Include/cpython/funcobject.h Include/cpython/lock.h Include/moduleobject.h Include/fileobject.h Include/cpython/tupleobject.h Include/cpython/weakrefobject.h Include/cpython/pyatomic.h Include/cpython/unicodeobject.h Include/listobject.h Include/internal/pycore_import.h Include/monitoring.h Include/cpython/sysmodule.h Include/cpython/traceback.h Include/patchlevel.h Include/pycapsule.h Include/pythonrun.h Include/sliceobject.h Include/sysmodule.h Include/cpython/pyframe.h Include/internal/pycore_fileutils.h Include/cpython/longintrepr.h Include/cpython/pythonrun.h pyconfig.h Include/cpython/picklebufobject.h Include/cpython/compile.h Include/fileutils.h Include/marshal.h Include/cpython/floatobject.h Include/ceval.h Include/cpython/pydebug.h Include/cpython/fileobject.h Include/bytearrayobject.h Include/cpython/modsupport.h Include/descrobject.h Include/pyframe.h Include/cpython/bytearrayobject.h Include/methodobject.h Include/critical_section.h Include/cpython/complexobject.h Include/cpython/dictobject.h Include/cpython/pyatomic_gcc.h Include/cpython/pyerrors.h Include/cpython/context.h Include/refcount.h Include/setobject.h Include/pybuffer.h
 
-Modules/getpath_noop.o: $(srcdir)/Modules/getpath_noop.c Makefile
+Modules/getpath_noop.o: $(srcdir)/Modules/getpath_noop.c Makefile Include/floatobject.h Include/bytesobject.h Include/compile.h Include/pytypedefs.h Include/intrcheck.h Include/longobject.h Include/bltinmodule.h Include/typeslots.h Include/pymem.h Include/pyerrors.h Include/warnings.h Include/abstract.h Include/complexobject.h Include/memoryobject.h Include/import.h Include/pyhash.h Include/pyatomic.h Include/genericaliasobject.h Include/iterobject.h Include/pylifecycle.h Include/traceback.h Include/enumobject.h Include/pyport.h Include/Python.h Include/dictobject.h Include/objimpl.h Include/pymacconfig.h Include/pythread.h Include/pystats.h Include/weakrefobject.h Include/structseq.h Include/pystrtod.h Include/unicodeobject.h Include/modsupport.h Include/tupleobject.h Include/object.h Include/lock.h Include/pymath.h Include/rangeobject.h Include/pystrcmp.h Include/codecs.h Include/boolobject.h Include/exports.h Include/osmodule.h Include/pymacro.h Include/pystate.h Include/moduleobject.h Include/fileobject.h Include/listobject.h Include/monitoring.h Include/patchlevel.h Include/pycapsule.h Include/pythonrun.h Include/sliceobject.h Include/sysmodule.h Include/fileutils.h Include/ceval.h Include/bytearrayobject.h Include/descrobject.h Include/pyframe.h Include/methodobject.h Include/critical_section.h Include/refcount.h Include/setobject.h Include/pybuffer.h Include/cpython/monitoring.h Include/cpython/abstract.h Include/cpython/setobject.h Include/cpython/odictobject.h Include/cpython/object.h Include/cpython/classobject.h Include/cpython/descrobject.h Include/cpython/initconfig.h Include/cpython/ceval.h Include/cpython/warnings.h Include/cpython/fileutils.h Include/cpython/longobject.h Include/cpython/pyhash.h Include/cpython/pylifecycle.h Include/cpython/cellobject.h Include/cpython/listobject.h Include/cpython/pymem.h Include/cpython/pystate.h Include/cpython/memoryobject.h Include/cpython/code.h Include/cpython/tracemalloc.h Include/cpython/methodobject.h Include/cpython/pyctype.h Include/cpython/objimpl.h Include/cpython/pyfpe.h Include/cpython/critical_section.h Include/cpython/bytesobject.h Include/cpython/import.h Include/cpython/genobject.h Include/cpython/pythread.h Include/cpython/funcobject.h Include/cpython/lock.h Include/cpython/tupleobject.h Include/cpython/weakrefobject.h Include/cpython/pyatomic.h Include/cpython/unicodeobject.h Include/cpython/sysmodule.h Include/cpython/traceback.h Include/cpython/pyframe.h Include/cpython/longintrepr.h Include/cpython/pythonrun.h Include/cpython/picklebufobject.h Include/cpython/compile.h Include/cpython/floatobject.h Include/cpython/pydebug.h Include/cpython/fileobject.h Include/cpython/modsupport.h Include/cpython/bytearrayobject.h Include/cpython/complexobject.h Include/cpython/dictobject.h Include/cpython/pyatomic_gcc.h Include/cpython/pyerrors.h Include/cpython/context.h Include/internal/pycore_pathconfig.h pyconfig.h
 
 Programs/_freeze_module: Programs/_freeze_module.o Modules/getpath_noop.o $(LIBRARY_OBJS_OMIT_FROZEN)
 	$(LINKCC) $(PY_CORE_LDFLAGS) -o $@ Programs/_freeze_module.o Modules/getpath_noop.o $(LIBRARY_OBJS_OMIT_FROZEN) $(LIBS) $(MODLIBS) $(SYSLIBS)
@@ -1675,7 +1681,7 @@ regen-importlib: regen-frozen
 ############################################################################
 # Global objects
 
-# Dependencies which can add and/or remove _Py_ID() identifiers:
+# Dependencies which can add and/or remove _Py_ID() identifiers: 
 # - "make clinic"
 .PHONY: regen-global-objects
 regen-global-objects: $(srcdir)/Tools/build/generate_global_objects.py clinic
@@ -1702,7 +1708,7 @@ regen-limited-abi: all
 # Regenerate Unicode Data
 
 .PHONY: regen-unicodedata
-regen-unicodedata:
+regen-unicodedata: 
 	$(PYTHON_FOR_REGEN) $(srcdir)/Tools/unicode/makeunicodedata.py
 
 
@@ -1751,15 +1757,15 @@ Programs/python.o: $(srcdir)/Programs/python.c
 Programs/_testembed.o: $(srcdir)/Programs/_testembed.c Programs/test_frozenmain.h $(PYTHON_HEADERS)
 	$(CC) -c $(PY_CORE_CFLAGS) -o $@ $(srcdir)/Programs/_testembed.c
 
-Modules/_sre/sre.o: $(srcdir)/Modules/_sre/sre.c $(srcdir)/Modules/_sre/sre.h $(srcdir)/Modules/_sre/sre_constants.h $(srcdir)/Modules/_sre/sre_lib.h
+Modules/_sre/sre.o: $(srcdir)/Modules/_sre/sre.c $(srcdir)/Modules/_sre/sre.h $(srcdir)/Modules/_sre/sre_constants.h $(srcdir)/Modules/_sre/sre_lib.h $(srcdir)/Modules/_sre/sre_targets.h $(srcdir)/Include/internal/pycore_emscripten_trampoline.h
 
-Modules/posixmodule.o: $(srcdir)/Modules/posixmodule.c $(srcdir)/Modules/posixmodule.h
+Modules/posixmodule.o: $(srcdir)/Modules/posixmodule.c $(srcdir)/Modules/posixmodule.h $(srcdir)/Include/internal/pycore_emscripten_trampoline.h
 
 Modules/grpmodule.o: $(srcdir)/Modules/grpmodule.c $(srcdir)/Modules/posixmodule.h
 
 Modules/pwdmodule.o: $(srcdir)/Modules/pwdmodule.c $(srcdir)/Modules/posixmodule.h
 
-Modules/signalmodule.o: $(srcdir)/Modules/signalmodule.c $(srcdir)/Modules/posixmodule.h
+Modules/signalmodule.o: $(srcdir)/Modules/signalmodule.c $(srcdir)/Modules/posixmodule.h $(srcdir)/Include/internal/pycore_emscripten_signal.h
 
 Modules/_interpretersmodule.o: $(srcdir)/Modules/_interpretersmodule.c $(srcdir)/Modules/_interpreters_common.h
 
@@ -1767,7 +1773,7 @@ Modules/_interpqueuesmodule.o: $(srcdir)/Modules/_interpqueuesmodule.c $(srcdir)
 
 Modules/_interpchannelsmodule.o: $(srcdir)/Modules/_interpchannelsmodule.c $(srcdir)/Modules/_interpreters_common.h
 
-Python/crossinterp.o: $(srcdir)/Python/crossinterp.c $(srcdir)/Python/crossinterp_data_lookup.h $(srcdir)/Python/crossinterp_exceptions.h
+Python/crossinterp.o: $(srcdir)/Python/crossinterp.c $(srcdir)/Python/crossinterp_data_lookup.h $(srcdir)/Python/crossinterp_exceptions.h $(srcdir)/Include/internal/pycore_emscripten_trampoline.h
 
 Python/initconfig.o: $(srcdir)/Python/initconfig.c $(srcdir)/Python/config_common.h
 
@@ -1783,7 +1789,7 @@ Python/dynload_hpux.o: $(srcdir)/Python/dynload_hpux.c Makefile
 		-DSHLIB_EXT='"$(EXT_SUFFIX)"' \
 		-o $@ $(srcdir)/Python/dynload_hpux.c
 
-Python/sysmodule.o: $(srcdir)/Python/sysmodule.c Makefile $(srcdir)/Include/pydtrace.h
+Python/sysmodule.o: $(srcdir)/Python/sysmodule.c Makefile $(srcdir)/Include/pydtrace.h $(srcdir)/Include/internal/pycore_emscripten_trampoline.h
 	$(CC) -c $(PY_CORE_CFLAGS) \
 		-DABIFLAGS='"$(ABIFLAGS)"' \
 		$(MULTIARCH_CPPFLAGS) \
@@ -1792,7 +1798,7 @@ Python/sysmodule.o: $(srcdir)/Python/sysmodule.c Makefile $(srcdir)/Include/pydt
 $(IO_OBJS): $(IO_H)
 
 .PHONY: regen-pegen-metaparser
-regen-pegen-metaparser:
+regen-pegen-metaparser: 
 	@$(MKDIR_P) $(srcdir)/Tools/peg_generator/pegen
 	PYTHONPATH=$(srcdir)/Tools/peg_generator $(PYTHON_FOR_REGEN) -m pegen -q python \
 	$(srcdir)/Tools/peg_generator/pegen/metagrammar.gram \
@@ -1801,7 +1807,7 @@ regen-pegen-metaparser:
 	$(srcdir)/Tools/peg_generator/pegen/grammar_parser.py.new
 
 .PHONY: regen-pegen
-regen-pegen:
+regen-pegen: 
 	@$(MKDIR_P) $(srcdir)/Parser
 	@$(MKDIR_P) $(srcdir)/Parser/tokenizer
 	@$(MKDIR_P) $(srcdir)/Parser/lexer
@@ -1812,7 +1818,7 @@ regen-pegen:
 	$(UPDATE_FILE) $(srcdir)/Parser/parser.c $(srcdir)/Parser/parser.c.new
 
 .PHONY: regen-ast
-regen-ast:
+regen-ast: 
 	# Regenerate 3 files using using Parser/asdl_c.py:
 	# - Include/internal/pycore_ast.h
 	# - Include/internal/pycore_ast_state.h
@@ -1830,7 +1836,7 @@ regen-ast:
 	$(UPDATE_FILE) $(srcdir)/Python/Python-ast.c $(srcdir)/Python/Python-ast.c.new
 
 .PHONY: regen-token
-regen-token:
+regen-token: 
 	# Regenerate Doc/library/token-list.inc from Grammar/Tokens
 	# using Tools/build/generate_token.py
 	$(PYTHON_FOR_REGEN) $(srcdir)/Tools/build/generate_token.py rst \
@@ -1853,7 +1859,7 @@ regen-token:
 		$(srcdir)/Lib/token.py
 
 .PHONY: regen-keyword
-regen-keyword:
+regen-keyword: 
 	# Regenerate Lib/keyword.py from Grammar/python.gram and Grammar/Tokens
 	# using Tools/peg_generator/pegen
 	PYTHONPATH=$(srcdir)/Tools/peg_generator $(PYTHON_FOR_REGEN) -m pegen.keywordgen \
@@ -1872,7 +1878,7 @@ regen-stdlib-module-names: all Programs/_testembed
 	$(UPDATE_FILE) $(srcdir)/Python/stdlib_module_names.h $(srcdir)/Python/stdlib_module_names.h.new
 
 .PHONY: regen-sre
-regen-sre:
+regen-sre: 
 	# Regenerate Modules/_sre/sre_constants.h and Modules/_sre/sre_targets.h
 	# from Lib/re/_constants.py using Tools/build/generate_sre_constants.py
 	$(PYTHON_FOR_REGEN) $(srcdir)/Tools/build/generate_sre_constants.py \
@@ -1888,7 +1894,7 @@ Python/getplatform.o: $(srcdir)/Python/getplatform.c
 Python/importdl.o: $(srcdir)/Python/importdl.c
 		$(CC) -c $(PY_CORE_CFLAGS) -I$(DLINCLDIR) -o $@ $(srcdir)/Python/importdl.c
 
-Objects/unicodectype.o:	$(srcdir)/Objects/unicodectype.c \
+Objects/unicodectype.o: $(srcdir)/Objects/unicodectype.c \
 				$(srcdir)/Objects/unicodetype_db.h
 
 BYTESTR_DEPS = \
@@ -1900,7 +1906,9 @@ BYTESTR_DEPS = \
 		$(srcdir)/Objects/stringlib/partition.h \
 		$(srcdir)/Objects/stringlib/split.h \
 		$(srcdir)/Objects/stringlib/stringdefs.h \
-		$(srcdir)/Objects/stringlib/transmogrify.h
+		$(srcdir)/Objects/stringlib/transmogrify.h \
+		$(srcdir)/Include/internal/pycore_emscripten_trampoline.h \
+		$(srcdir)/Objects/stringlib/find_max_char.h
 
 UNICODE_DEPS = \
 		$(srcdir)/Objects/stringlib/asciilib.h \
@@ -1918,7 +1926,9 @@ UNICODE_DEPS = \
 		$(srcdir)/Objects/stringlib/ucs2lib.h \
 		$(srcdir)/Objects/stringlib/ucs4lib.h \
 		$(srcdir)/Objects/stringlib/undef.h \
-		$(srcdir)/Objects/stringlib/unicode_format.h
+		$(srcdir)/Objects/stringlib/unicode_format.h \
+		$(srcdir)/Objects/stringlib/eq.h \
+		$(srcdir)/Include/internal/pycore_emscripten_trampoline.h 
 
 Objects/bytes_methods.o: $(srcdir)/Objects/bytes_methods.c $(BYTESTR_DEPS)
 Objects/bytesobject.o: $(srcdir)/Objects/bytesobject.c $(BYTESTR_DEPS)
@@ -1926,8 +1936,8 @@ Objects/bytearrayobject.o: $(srcdir)/Objects/bytearrayobject.c $(BYTESTR_DEPS)
 
 Objects/unicodeobject.o: $(srcdir)/Objects/unicodeobject.c $(UNICODE_DEPS)
 
-Objects/dictobject.o: $(srcdir)/Objects/stringlib/eq.h
-Objects/setobject.o: $(srcdir)/Objects/stringlib/eq.h
+Objects/dictobject.o: $(srcdir)/Objects/stringlib/eq.h $(srcdir)/Include/cpython/pytime.h $(srcdir)/Include/internal/pycore_emscripten_trampoline.h
+Objects/setobject.o: $(srcdir)/Objects/stringlib/eq.h $(srcdir)/Include/internal/pycore_emscripten_trampoline.h
 
 Objects/obmalloc.o: $(srcdir)/Objects/mimalloc/alloc.c \
 		$(srcdir)/Objects/mimalloc/alloc-aligned.c \
@@ -1946,7 +1956,12 @@ Objects/obmalloc.o: $(srcdir)/Objects/mimalloc/alloc.c \
 		$(srcdir)/Objects/mimalloc/prim/prim.c \
 		$(srcdir)/Objects/mimalloc/prim/osx/prim.c \
 		$(srcdir)/Objects/mimalloc/prim/unix/prim.c \
-		$(srcdir)/Objects/mimalloc/prim/wasi/prim.c
+		$(srcdir)/Objects/mimalloc/prim/wasi/prim.c \
+		$(srcdir)/Objects/mimalloc/alloc-override.c \
+		$(srcdir)/Objects/mimalloc/static.c \
+		$(srcdir)/Objects/mimalloc/page-queue.c \
+		$(srcdir)/Objects/mimalloc/bitmap.h \
+		$(srcdir)/Include/internal/pycore_emscripten_trampoline.h 
 
 Objects/mimalloc/page.o: $(srcdir)/Objects/mimalloc/page-queue.c
 
@@ -1961,43 +1976,43 @@ regen-cases: \
 		regen-opcode-metadata regen-uop-metadata
 
 .PHONY: regen-opcode-ids
-regen-opcode-ids:
+regen-opcode-ids: 
 	$(PYTHON_FOR_REGEN) $(srcdir)/Tools/cases_generator/opcode_id_generator.py \
 	    -o $(srcdir)/Include/opcode_ids.h.new $(srcdir)/Python/bytecodes.c
 	$(UPDATE_FILE) $(srcdir)/Include/opcode_ids.h $(srcdir)/Include/opcode_ids.h.new
 
 .PHONY: regen-opcode-targets
-regen-opcode-targets:
+regen-opcode-targets: 
 	$(PYTHON_FOR_REGEN) $(srcdir)/Tools/cases_generator/target_generator.py \
 	    -o $(srcdir)/Python/opcode_targets.h.new $(srcdir)/Python/bytecodes.c
 	$(UPDATE_FILE) $(srcdir)/Python/opcode_targets.h $(srcdir)/Python/opcode_targets.h.new
 
 .PHONY: regen-uop-ids
-regen-uop-ids:
+regen-uop-ids: 
 	$(PYTHON_FOR_REGEN) $(srcdir)/Tools/cases_generator/uop_id_generator.py \
 	    -o $(srcdir)/Include/internal/pycore_uop_ids.h.new $(srcdir)/Python/bytecodes.c
 	$(UPDATE_FILE) $(srcdir)/Include/internal/pycore_uop_ids.h $(srcdir)/Include/internal/pycore_uop_ids.h.new
 
 .PHONY: regen-opcode-metadata-py
-regen-opcode-metadata-py:
+regen-opcode-metadata-py: 
 	$(PYTHON_FOR_REGEN) $(srcdir)/Tools/cases_generator/py_metadata_generator.py \
 	    -o $(srcdir)/Lib/_opcode_metadata.py.new $(srcdir)/Python/bytecodes.c
 	$(UPDATE_FILE) $(srcdir)/Lib/_opcode_metadata.py $(srcdir)/Lib/_opcode_metadata.py.new
 
 .PHONY: regen-generated-cases
-regen-generated-cases:
+regen-generated-cases: 
 	$(PYTHON_FOR_REGEN) $(srcdir)/Tools/cases_generator/tier1_generator.py \
 	    -o $(srcdir)/Python/generated_cases.c.h.new $(srcdir)/Python/bytecodes.c
 	$(UPDATE_FILE) $(srcdir)/Python/generated_cases.c.h $(srcdir)/Python/generated_cases.c.h.new
 
 .PHONY: regen-executor-cases
-regen-executor-cases:
+regen-executor-cases: 
 	$(PYTHON_FOR_REGEN) $(srcdir)/Tools/cases_generator/tier2_generator.py \
 	    -o $(srcdir)/Python/executor_cases.c.h.new $(srcdir)/Python/bytecodes.c
 	$(UPDATE_FILE) $(srcdir)/Python/executor_cases.c.h $(srcdir)/Python/executor_cases.c.h.new
 
 .PHONY: regen-optimizer-cases
-regen-optimizer-cases:
+regen-optimizer-cases: 
 	$(PYTHON_FOR_REGEN) $(srcdir)/Tools/cases_generator/optimizer_generator.py \
 	    -o $(srcdir)/Python/optimizer_cases.c.h.new \
 	    $(srcdir)/Python/optimizer_bytecodes.c \
@@ -2005,13 +2020,13 @@ regen-optimizer-cases:
 	$(UPDATE_FILE) $(srcdir)/Python/optimizer_cases.c.h $(srcdir)/Python/optimizer_cases.c.h.new
 
 .PHONY: regen-opcode-metadata
-regen-opcode-metadata:
+regen-opcode-metadata: 
 	$(PYTHON_FOR_REGEN) $(srcdir)/Tools/cases_generator/opcode_metadata_generator.py \
 	    -o $(srcdir)/Include/internal/pycore_opcode_metadata.h.new $(srcdir)/Python/bytecodes.c
 	$(UPDATE_FILE) $(srcdir)/Include/internal/pycore_opcode_metadata.h $(srcdir)/Include/internal/pycore_opcode_metadata.h.new
 
 .PHONY: regen-uop-metadata
-regen-uop-metadata:
+regen-uop-metadata: 
 	$(PYTHON_FOR_REGEN) $(srcdir)/Tools/cases_generator/uop_metadata_generator.py -o \
 	    $(srcdir)/Include/internal/pycore_uop_metadata.h.new $(srcdir)/Python/bytecodes.c
 	$(UPDATE_FILE) $(srcdir)/Include/internal/pycore_uop_metadata.h $(srcdir)/Include/internal/pycore_uop_metadata.h.new
@@ -2023,14 +2038,16 @@ Python/compile.o Python/codegen.o Python/assemble.o Python/flowgraph.o Python/in
                 $(srcdir)/Include/internal/pycore_opcode_metadata.h \
                 $(srcdir)/Include/internal/pycore_opcode_utils.h
 
-Python/ceval.o: \
+Python/ceval.o: \ 
 		$(srcdir)/Python/ceval_macros.h \
 		$(srcdir)/Python/condvar.h \
 		$(srcdir)/Python/generated_cases.c.h \
 		$(srcdir)/Python/executor_cases.c.h \
 		$(srcdir)/Python/opcode_targets.h
+		$(srcdir)/Include/internal/pycore_emscripten_signal.h \
+		$(srcdir)/Include/internal/pycore_emscripten_trampoline.h
 
-Python/flowgraph.o: \
+Python/flowgraph.o: \ 
 		$(srcdir)/Include/internal/pycore_opcode_metadata.h
 
 Python/optimizer.o: \
@@ -2055,17 +2072,17 @@ Include/pydtrace_probes.h: $(srcdir)/Include/pydtrace.d
 	sed 's/PYTHON_/PyDTrace_/' $@ > $@.tmp
 	mv $@.tmp $@
 
-Python/ceval.o: $(srcdir)/Include/pydtrace.h
-Python/gc.o: $(srcdir)/Include/pydtrace.h
-Python/import.o: $(srcdir)/Include/pydtrace.h
+Python/ceval.o: $(srcdir)/Include/pydtrace.h $(srcdir)/Include/internal/pycore_emscripten_signal.h $(srcdir)/Include/internal/pycore_emscripten_trampoline.h
+Python/gc.o: $(srcdir)/Include/pydtrace.h $(srcdir)/Include/internal/pycore_emscripten_trampoline.h
+Python/import.o: $(srcdir)/Include/pydtrace.h $(srcdir)/Include/internal/pycore_magic_number.h $(srcdir)/Include/internal/pycore_emscripten_trampoline.h
 
 Python/pydtrace.o: $(srcdir)/Include/pydtrace.d $(DTRACE_DEPS)
 	$(DTRACE) $(DFLAGS) -o $@ -G -s $< $(DTRACE_DEPS)
 
-Objects/typeobject.o: Objects/typeslots.inc
+Objects/typeobject.o: Objects/typeslots.inc Include/internal/pycore_emscripten_trampoline.h
 
 .PHONY: regen-typeslots
-regen-typeslots:
+regen-typeslots: 
 	# Regenerate Objects/typeslots.inc from Include/typeslotsh
 	# using Objects/typeslots.py
 	$(PYTHON_FOR_REGEN) $(srcdir)/Objects/typeslots.py \
@@ -2115,7 +2132,7 @@ testuniversal: all
 XCFOLDER:=iOSTestbed.$(MULTIARCH).$(shell date +%s)
 XCRESULT=$(XCFOLDER)/$(MULTIARCH).xcresult
 .PHONY: testios
-testios:
+testios: 
 	@if test "$(MACHDEP)" != "ios"; then \
 		echo "Cannot run the iOS testbed for a non-iOS build."; \
 		exit 1;\
@@ -2217,7 +2234,7 @@ altinstall: commoninstall
 	fi
 
 .PHONY: commoninstall
-commoninstall:  check-clean-src @FRAMEWORKALTINSTALLFIRST@ \
+commoninstall: check-clean-src @FRAMEWORKALTINSTALLFIRST@ \
 		altbininstall libinstall inclinstall libainstall \
 		sharedinstall altmaninstall @FRAMEWORKALTINSTALLLAST@
 
@@ -2357,7 +2374,7 @@ bininstall: commoninstall altbininstall
 
 # Install the versioned manual page
 .PHONY: altmaninstall
-altmaninstall:
+altmaninstall: 
 	@for i in $(MANDIR) $(MANDIR)/man1; \
 	do \
 		if test ! -d $(DESTDIR)$$i; then \
@@ -2371,7 +2388,7 @@ altmaninstall:
 
 # Install the unversioned manual page
 .PHONY: maninstall
-maninstall:	altmaninstall
+maninstall: altmaninstall
 	-rm -f $(DESTDIR)$(MANDIR)/man1/python3.1
 	(cd $(DESTDIR)$(MANDIR)/man1; $(LN) -s python$(VERSION).1 python3.1)
 
@@ -2552,7 +2569,7 @@ COMPILEALL_OPTS=-j0
 TEST_MODULES=@TEST_MODULES@
 
 .PHONY: libinstall
-libinstall:	all $(srcdir)/Modules/xxmodule.c
+libinstall: all $(srcdir)/Modules/xxmodule.c
 	@for i in $(SCRIPTDIR) $(LIBDEST); \
 	do \
 		if test ! -d $(DESTDIR)$$i; then \
@@ -2677,7 +2694,7 @@ scripts: $(SCRIPT_IDLE) $(SCRIPT_PYDOC) python-config
 INCLDIRSTOMAKE=$(INCLUDEDIR) $(CONFINCLUDEDIR) $(INCLUDEPY) $(CONFINCLUDEPY)
 
 .PHONY: inclinstall
-inclinstall:
+inclinstall: 
 	@for i in $(INCLDIRSTOMAKE); \
 	do \
 		if test ! -d $(DESTDIR)$$i; then \
@@ -2813,7 +2830,7 @@ frameworkinstallframework: @FRAMEWORKINSTALLFIRST@ install frameworkinstallmacli
 
 # macOS uses a versioned frameworks structure that includes a full install
 .PHONY: frameworkinstallversionedstructure
-frameworkinstallversionedstructure:	$(LDLIBRARY)
+frameworkinstallversionedstructure: $(LDLIBRARY)
 	@if test "$(PYTHONFRAMEWORKDIR)" = no-framework; then \
 		echo Not configured with --enable-framework; \
 		exit 1; \
@@ -2837,7 +2854,7 @@ frameworkinstallversionedstructure:	$(LDLIBRARY)
 # iOS/tvOS/watchOS uses a non-versioned framework with Info.plist in the
 # framework root, no .lproj data, and only stub compilation assistance binaries
 .PHONY: frameworkinstallunversionedstructure
-frameworkinstallunversionedstructure:	$(LDLIBRARY)
+frameworkinstallunversionedstructure: $(LDLIBRARY)
 	@if test "$(PYTHONFRAMEWORKDIR)" = no-framework; then \
 		echo Not configured with --enable-framework; \
 		exit 1; \
@@ -2859,7 +2876,7 @@ frameworkinstallunversionedstructure:	$(LDLIBRARY)
 # Install a number of symlinks to keep software that expects a normal unix
 # install (which includes python-config) happy.
 .PHONY: frameworkinstallmaclib
-frameworkinstallmaclib:
+frameworkinstallmaclib: 
 	$(LN) -fs "../../../$(PYTHONFRAMEWORK)" "$(DESTDIR)$(LIBPL)/libpython$(LDVERSION).a"
 	$(LN) -fs "../../../$(PYTHONFRAMEWORK)" "$(DESTDIR)$(LIBPL)/libpython$(LDVERSION).dylib"
 	$(LN) -fs "../../../$(PYTHONFRAMEWORK)" "$(DESTDIR)$(LIBPL)/libpython$(VERSION).a"
@@ -2869,30 +2886,30 @@ frameworkinstallmaclib:
 
 # This installs the IDE, the Launcher and other apps into /Applications
 .PHONY: frameworkinstallapps
-frameworkinstallapps:
+frameworkinstallapps: 
 	cd Mac && $(MAKE) installapps DESTDIR="$(DESTDIR)"
 
 # Build the bootstrap executable that will spawn the interpreter inside
 # an app bundle within the framework.  This allows the interpreter to
 # run OS X GUI APIs.
 .PHONY: frameworkpythonw
-frameworkpythonw:
+frameworkpythonw: 
 	cd Mac && $(MAKE) pythonw
 
 # This installs the python* and other bin symlinks in $prefix/bin or in
 # a bin directory relative to the framework root
 .PHONY: frameworkinstallunixtools
-frameworkinstallunixtools:
+frameworkinstallunixtools: 
 	cd Mac && $(MAKE) installunixtools DESTDIR="$(DESTDIR)"
 
 .PHONY: frameworkaltinstallunixtools
-frameworkaltinstallunixtools:
+frameworkaltinstallunixtools: 
 	cd Mac && $(MAKE) altinstallunixtools DESTDIR="$(DESTDIR)"
 
 # This installs the Tools into the applications directory.
 # It is not part of a normal frameworkinstall
 .PHONY: frameworkinstallextras
-frameworkinstallextras:
+frameworkinstallextras: 
 	cd Mac && $(MAKE) installextras DESTDIR="$(DESTDIR)"
 
 # On iOS, bin/lib can't live inside the framework; include needs to be called
@@ -2914,7 +2931,7 @@ Makefile.pre: $(srcdir)/Makefile.pre.in config.status
 	$(MAKE) -f Makefile.pre Makefile
 
 # Run the configure script.
-config.status:	$(srcdir)/configure
+config.status: $(srcdir)/configure
 	$(srcdir)/configure $(CONFIG_ARGS)
 
 .PRECIOUS: config.status $(BUILDPYTHON) Makefile Makefile.pre
@@ -2936,11 +2953,11 @@ Python/jit.o: $(srcdir)/Python/jit.c @JIT_STENCILS_H@
 	$(CC) -c $(PY_CORE_CFLAGS) -o $@ $<
 
 .PHONY: regen-jit
-regen-jit:
+regen-jit: 
 	@REGEN_JIT_COMMAND@
 
 # Some make's put the object file in the current directory
-.c.o:
+.c.o: 
 	$(CC) -c $(PY_CORE_CFLAGS) -o $@ $<
 
 # bpo-30104: dtoa.c uses union to cast double to unsigned long[2]. clang 4.0
@@ -2952,31 +2969,31 @@ Python/dtoa.o: Python/dtoa.c
 
 # Run reindent on the library
 .PHONY: reindent
-reindent:
+reindent: 
 	./$(BUILDPYTHON) $(srcdir)/Tools/patchcheck/reindent.py -r $(srcdir)/Lib
 
 # Rerun configure with the same options as it was run last time,
 # provided the config.status script exists
 .PHONY: recheck
-recheck:
+recheck: 
 	./config.status --recheck
 	./config.status
 
 # Regenerate configure and pyconfig.h.in
 .PHONY: autoconf
-autoconf:
+autoconf: 
 	(cd $(srcdir); autoreconf -ivf -Werror)
 
 .PHONY: regen-configure
-regen-configure:
+regen-configure: 
 	$(srcdir)/Tools/build/regen-configure.sh
 
 .PHONY: regen-sbom
-regen-sbom:
+regen-sbom: 
 	$(PYTHON_FOR_REGEN) $(srcdir)/Tools/build/generate_sbom.py
 
 # Create a tags file for vi
-tags::
+tags:: 
 	ctags -w $(srcdir)/Include/*.h $(srcdir)/Include/cpython/*.h $(srcdir)/Include/internal/*.h
 	for i in $(SRCDIRS); do ctags -f tags -w -a $(srcdir)/$$i/*.[ch]; done
 	ctags -f tags -w -a $(srcdir)/Modules/_ctypes/*.[ch]
@@ -2984,7 +3001,7 @@ tags::
 	LC_ALL=C sort -o tags tags
 
 # Create a tags file for GNU Emacs
-TAGS::
+TAGS:: 
 	cd $(srcdir); \
 	etags Include/*.h Include/cpython/*.h Include/internal/*.h; \
 	for i in $(SRCDIRS); do etags -a $$i/*.[ch]; done
@@ -2994,12 +3011,12 @@ TAGS::
 # Sanitation targets -- clean leaves libraries, executables and tags
 # files, which clobber removes as well
 .PHONY: pycremoval
-pycremoval:
+pycremoval: 
 	-find $(srcdir) -depth -name '__pycache__' -exec rm -rf {} ';'
 	-find $(srcdir) -name '*.py[co]' -exec rm -f {} ';'
 
 .PHONY: rmtestturds
-rmtestturds:
+rmtestturds: 
 	-rm -f *BAD *GOOD *SKIPPED
 	-rm -rf OUT
 	-rm -f *.TXT
@@ -3007,7 +3024,7 @@ rmtestturds:
 	-rm -f gb-18030-2000.xml
 
 .PHONY: docclean
-docclean:
+docclean: 
 	$(MAKE) -C $(srcdir)/Doc clean
 
 # like the 'clean' target but retain the profile guided optimization (PGO)
@@ -3041,7 +3058,7 @@ clean-retain-profile: pycremoval
 	-rm -rf iOS/testbed/Python.xcframework/ios-*/Python.framework
 
 .PHONY: profile-removal
-profile-removal:
+profile-removal: 
 	find . -name '*.gc??' -exec rm -f {} ';'
 	find . -name '*.profclang?' -exec rm -f {} ';'
 	find . -name '*.dyn' -exec rm -f {} ';'
@@ -3069,7 +3086,7 @@ clobber: clean
 	-rm -f python-config.py python-config
 	-rm -rf cross-build
 
-# Make things extra clean, before making a distribution:
+# Make things extra clean, before making a distribution: 
 # remove all generated files, even Makefile[.pre]
 # Keep configure and Python-ast.[ch], it's possible they can't be generated
 .PHONY: distclean
@@ -3099,14 +3116,14 @@ smelly: all
 
 # Check if any unsupported C global variables have been added.
 .PHONY: check-c-globals
-check-c-globals:
+check-c-globals: 
 	$(PYTHON_FOR_REGEN) $(srcdir)/Tools/c-analyzer/check-c-globals.py \
 		--format summary \
 		--traceback
 
 # Find files with funny names
 .PHONY: funny
-funny:
+funny: 
 	find $(SUBDIRS) $(SUBDIRSTOO) \
 		-type d \
 		-o -name '*.[chs]' \
@@ -3146,7 +3163,7 @@ check-limited-abi: all
 	$(RUNSHARED) ./$(BUILDPYTHON) $(srcdir)/Tools/build/stable_abi.py --all
 
 .PHONY: update-config
-update-config:
+update-config: 
 	curl -sL -o config.guess 'https://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=HEAD'
 	curl -sL -o config.sub 'https://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=HEAD'
 	chmod +x config.guess config.sub
@@ -3198,6 +3215,6 @@ MODULE__CODECS_TW_DEPS=$(srcdir)/Modules/cjkcodecs/mappings_tw.h $(CODECS_COMMON
 MODULE__MULTIBYTECODEC_DEPS=$(srcdir)/Modules/cjkcodecs/multibytecodec.h
 
 # IF YOU PUT ANYTHING HERE IT WILL GO AWAY
-# Local Variables:
+# Local Variables: 
 # mode: makefile
-# End:
+# End: 

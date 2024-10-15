@@ -24,6 +24,25 @@ extern const char *_PyUOpName(int index);
  * ./adaptive.md
  */
 
+#ifdef Py_GIL_DISABLED
+#define SET_OPCODE_OR_RETURN(instr, opcode)                                \
+    do {                                                                   \
+        uint8_t old_op = _Py_atomic_load_uint8_relaxed(&(instr)->op.code); \
+        if (old_op >= MIN_INSTRUMENTED_OPCODE) {                           \
+            /* Lost race with instrumentation */                           \
+            return;                                                        \
+        }                                                                  \
+        if (!_Py_atomic_compare_exchange_uint8(&(instr)->op.code, &old_op, \
+                                               (opcode))) {                \
+            /* Lost race with instrumentation */                           \
+            assert(old_op >= MIN_INSTRUMENTED_OPCODE);                     \
+            return;                                                        \
+        }                                                                  \
+    } while (0)
+#else
+#define SET_OPCODE_OR_RETURN(instr, opcode) (instr)->op.code = (opcode)
+#endif
+
 #ifdef Py_STATS
 GCStats _py_gc_stats[NUM_GENERATIONS] = { 0 };
 static PyStats _Py_stats_struct = { .gc_stats = _py_gc_stats };
@@ -438,13 +457,12 @@ do { \
 
 // Initialize warmup counters and insert superinstructions. This cannot fail.
 void
-_PyCode_Quicken(PyCodeObject *code)
+_PyCode_Quicken(_Py_CODEUNIT *instructions, Py_ssize_t size)
 {
-    #if ENABLE_SPECIALIZATION
+    #if ENABLE_SPECIALIZATION_FT
     int opcode = 0;
-    _Py_CODEUNIT *instructions = _PyCode_CODE(code);
     /* The last code unit cannot have a cache, so we don't need to check it */
-    for (int i = 0; i < Py_SIZE(code)-1; i++) {
+    for (Py_ssize_t i = 0; i < size-1; i++) {
         opcode = instructions[i].op.code;
         int caches = _PyOpcode_Caches[opcode];
         if (caches) {
@@ -466,8 +484,27 @@ _PyCode_Quicken(PyCodeObject *code)
             i += caches;
         }
     }
-    #endif /* ENABLE_SPECIALIZATION */
+    #endif /* ENABLE_SPECIALIZATION_FT */
 }
+
+#ifdef Py_GIL_DISABLED
+
+void
+_PyCode_DisableSpecialization(_Py_CODEUNIT *instructions, Py_ssize_t size)
+{
+    /* The last code unit cannot have a cache, so we don't need to check it */
+    for (Py_ssize_t i = 0; i < size - 1; i++) {
+        int opcode = instructions[i].op.code;
+        int caches = _PyOpcode_Caches[opcode];
+        if (caches) {
+            instructions[i + 1].counter =
+                initial_unreachable_backoff_counter();
+            i += caches;
+        }
+    }
+}
+
+#endif
 
 #define SIMPLE_FUNCTION 0
 
@@ -2229,9 +2266,10 @@ _Py_Specialize_BinaryOp(_PyStackRef lhs_st, _PyStackRef rhs_st, _Py_CODEUNIT *in
 {
     PyObject *lhs = PyStackRef_AsPyObjectBorrow(lhs_st);
     PyObject *rhs = PyStackRef_AsPyObjectBorrow(rhs_st);
-    assert(ENABLE_SPECIALIZATION);
+    assert(ENABLE_SPECIALIZATION_FT);
     assert(_PyOpcode_Caches[BINARY_OP] == INLINE_CACHE_ENTRIES_BINARY_OP);
     _PyBinaryOpCache *cache = (_PyBinaryOpCache *)(instr + 1);
+    uint8_t specialized_op;
     switch (oparg) {
         case NB_ADD:
         case NB_INPLACE_ADD:
@@ -2242,18 +2280,18 @@ _Py_Specialize_BinaryOp(_PyStackRef lhs_st, _PyStackRef rhs_st, _Py_CODEUNIT *in
                 _Py_CODEUNIT next = instr[INLINE_CACHE_ENTRIES_BINARY_OP + 1];
                 bool to_store = (next.op.code == STORE_FAST);
                 if (to_store && PyStackRef_AsPyObjectBorrow(locals[next.op.arg]) == lhs) {
-                    instr->op.code = BINARY_OP_INPLACE_ADD_UNICODE;
+                    specialized_op = BINARY_OP_INPLACE_ADD_UNICODE;
                     goto success;
                 }
-                instr->op.code = BINARY_OP_ADD_UNICODE;
+                specialized_op = BINARY_OP_ADD_UNICODE;
                 goto success;
             }
             if (PyLong_CheckExact(lhs)) {
-                instr->op.code = BINARY_OP_ADD_INT;
+                specialized_op = BINARY_OP_ADD_INT;
                 goto success;
             }
             if (PyFloat_CheckExact(lhs)) {
-                instr->op.code = BINARY_OP_ADD_FLOAT;
+                specialized_op = BINARY_OP_ADD_FLOAT;
                 goto success;
             }
             break;
@@ -2263,11 +2301,11 @@ _Py_Specialize_BinaryOp(_PyStackRef lhs_st, _PyStackRef rhs_st, _Py_CODEUNIT *in
                 break;
             }
             if (PyLong_CheckExact(lhs)) {
-                instr->op.code = BINARY_OP_MULTIPLY_INT;
+                specialized_op = BINARY_OP_MULTIPLY_INT;
                 goto success;
             }
             if (PyFloat_CheckExact(lhs)) {
-                instr->op.code = BINARY_OP_MULTIPLY_FLOAT;
+                specialized_op = BINARY_OP_MULTIPLY_FLOAT;
                 goto success;
             }
             break;
@@ -2277,22 +2315,23 @@ _Py_Specialize_BinaryOp(_PyStackRef lhs_st, _PyStackRef rhs_st, _Py_CODEUNIT *in
                 break;
             }
             if (PyLong_CheckExact(lhs)) {
-                instr->op.code = BINARY_OP_SUBTRACT_INT;
+                specialized_op = BINARY_OP_SUBTRACT_INT;
                 goto success;
             }
             if (PyFloat_CheckExact(lhs)) {
-                instr->op.code = BINARY_OP_SUBTRACT_FLOAT;
+                specialized_op = BINARY_OP_SUBTRACT_FLOAT;
                 goto success;
             }
             break;
     }
     SPECIALIZATION_FAIL(BINARY_OP, binary_op_fail_kind(oparg, lhs, rhs));
     STAT_INC(BINARY_OP, failure);
-    instr->op.code = BINARY_OP;
+    SET_OPCODE_OR_RETURN(instr, BINARY_OP);
     cache->counter = adaptive_counter_backoff(cache->counter);
     return;
 success:
     STAT_INC(BINARY_OP, success);
+    SET_OPCODE_OR_RETURN(instr, specialized_op);
     cache->counter = adaptive_counter_cooldown();
 }
 

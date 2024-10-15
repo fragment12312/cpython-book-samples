@@ -346,7 +346,8 @@ MODULE_OBJS=	\
 		Modules/main.o \
 		Modules/gcmodule.o
 
-IO_H=		Modules/_io/_iomodule.h Include/internal/pycore_emscripten_trampoline.h
+IO_H=		Modules/_io/_iomodule.h \
+		Include/internal/pycore_emscripten_trampoline.h
 
 IO_OBJS=	\
 		Modules/_io/_iomodule.o \

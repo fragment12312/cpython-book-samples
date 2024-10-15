@@ -1698,16 +1698,15 @@ _PyPegen_check_future_import(Parser *p, stmt_ty importfrom) {
         goto exit;
     }
     asdl_alias_seq *names = importfrom->v.ImportFrom.names;
-    if (asdl_seq_LEN(names) != 1) {
-        goto exit;
-    }
     identifier mod = importfrom->v.ImportFrom.module;
     if (PyUnicode_CompareWithASCIIString(mod, "__future__") != 0) {
         goto exit;
     }
-    alias_ty alias = asdl_seq_GET(names, 0);
-    if (PyUnicode_CompareWithASCIIString(alias->name, "barry_as_FLUFL") == 0) {
-        p->flags |= PyPARSE_BARRY_AS_BDFL;
+    for (Py_ssize_t i = 0; i < asdl_seq_LEN(names); i++) {
+        alias_ty alias = asdl_seq_GET(names, i);
+        if (PyUnicode_CompareWithASCIIString(alias->name, "barry_as_FLUFL") == 0) {
+            p->flags |= PyPARSE_BARRY_AS_BDFL;
+        }
     }
 exit:
     return importfrom;

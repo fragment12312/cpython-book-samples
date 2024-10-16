@@ -1,3 +1,4 @@
+import dataclasses
 from pathlib import Path
 from typing import TextIO
 
@@ -118,7 +119,8 @@ class Emitter:
             "PyStackRef_CLOSE": self.stackref_close,
             "PyStackRef_CLOSE_SPECIALIZED": self.stackref_close,
             "PyStackRef_AsPyObjectSteal": self.stackref_steal,
-            "DISPATCH": self.dispatch
+            "DISPATCH": self.dispatch,
+            "INSTRUCTION_SIZE": self.instruction_size,
         }
         self.out = out
 
@@ -355,6 +357,18 @@ class Emitter:
         next(tkn_iter)
         next(tkn_iter)
         self.emit_reload(storage)
+        return True
+
+    def instruction_size(self,
+        tkn: Token,
+        tkn_iter: TokenIterator,
+        uop: Uop,
+        storage: Storage,
+        inst: Instruction | None
+    ) -> bool:
+        """Replace the INSTRUCTION_SIZE macro with the size of the current instruction."""
+        size = inst.size if inst else 1 + uop.size
+        self.out.emit(f" {size} ")
         return True
 
     def _print_storage(self, storage: Storage) -> None:

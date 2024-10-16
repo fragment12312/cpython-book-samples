@@ -942,7 +942,13 @@ interpolation if an option used is not defined elsewhere. ::
 ConfigParser Objects
 --------------------
 
-.. class:: ConfigParser(defaults=None, dict_type=dict, allow_no_value=False, delimiters=('=', ':'), comment_prefixes=('#', ';'), inline_comment_prefixes=None, strict=True, empty_lines_in_values=True, default_section=configparser.DEFAULTSECT, interpolation=BasicInterpolation(), converters={})
+.. class:: ConfigParser(defaults=None, dict_type=dict, allow_no_value=False, *, \
+                        delimiters=('=', ':'), comment_prefixes=('#', ';'), \
+                        inline_comment_prefixes=None, strict=True, \
+                        empty_lines_in_values=True, \
+                        default_section=configparser.DEFAULTSECT, \
+                        interpolation=BasicInterpolation(), converters={}, \
+                        allow_unnamed_section=False)
 
    The main configuration parser.  When *defaults* is given, it is initialized
    into the dictionary of intrinsic defaults.  When *dict_type* is given, it
@@ -989,6 +995,10 @@ ConfigParser Objects
    implementing the conversion from string to the desired datatype.  Every
    converter gets its own corresponding :meth:`!get*` method on the parser
    object and section proxies.
+
+   When *allow_unnamed_section* is ``True`` (default: ``False``),
+   the first section name can be omitted. See the
+   `"Unnamed Sections" section <#unnamed-sections>`_.
 
    It is possible to read several configurations into a single
    :class:`ConfigParser`, where the most recently added configuration has the
@@ -1038,6 +1048,9 @@ ConfigParser Objects
    .. versionchanged:: 3.13
       Raise a :exc:`MultilineContinuationError` when *allow_no_value* is
       ``True``, and a key without a value is continued with an indented line.
+
+   .. versionchanged:: 3.13
+      The *allow_unnamed_section* argument was added.
 
    .. method:: defaults()
 

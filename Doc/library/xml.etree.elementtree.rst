@@ -665,6 +665,11 @@ Functions
    not given, the standard :class:`XMLParser` parser is used.  Returns an
    :class:`ElementTree` instance.
 
+   .. note::
+
+      When the *source* encoding is ``ISO-8859-1`` and the mode is ``r``,
+      a warning is emited.
+
 
 .. function:: ProcessingInstruction(target, text=None)
 

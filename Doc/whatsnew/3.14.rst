@@ -420,6 +420,11 @@ asyncio
 Deprecated
 ==========
 
+* :mod:`argparse`:
+  Passing *prefix_chars* to :func:`argparse.add_argument_group`
+  is now deprecated.
+  (Contributed by Savannah Ostrowski in :gh:`125563`.)
+
 * :mod:`asyncio`:
   :func:`!asyncio.iscoroutinefunction` is deprecated
   and will be removed in Python 3.16,
